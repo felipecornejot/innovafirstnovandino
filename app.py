@@ -457,8 +457,16 @@ elif page == "04 Claim charts y trazabilidad":
             )
 
     st.markdown('<div class="section-title">Trazabilidad de fuentes</div>', unsafe_allow_html=True)
-    st.dataframe(sub[["source_file", "source_sheet", "jurisdiction", "status_bucket"]].drop_duplicates(), use_container_width=True, hide_index=True)
+trace_cols = [c for c in ["source_file", "source_sheet", "jurisdiction", "status_bucket"] if c in sub.columns]
 
+if trace_cols:
+    st.dataframe(
+        sub[trace_cols].drop_duplicates(),
+        use_container_width=True,
+        hide_index=True
+    )
+else:
+    st.info("No hay columnas de trazabilidad disponibles para esta familia en la selección actual.")
 elif page == "05 Patentabilidad preliminar":
     st.markdown('<div class="section-title">Patentabilidad preliminar</div>', unsafe_allow_html=True)
     st.markdown('<div class="subnote">Módulo vivo basado en tabla normalizada. Si no existe, la app sigue funcionando y te indica qué falta.</div>', unsafe_allow_html=True)
