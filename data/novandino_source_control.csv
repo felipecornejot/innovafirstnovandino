@@ -1,0 +1,6 @@
+source_file,available,sheets_loaded,useful_rows,normalization_note
+Innovafirst_Matriz_Maestra_Patentes_Consolidada_Fase2.xlsx,True,3,0,Se extrajeron solo tablas útiles con header real; se excluyeron hojas narrativas y metadata.
+Innovafirst_Screening_Amplio_Exhaustivo_Razonable_Fase2.xlsx,True,4,0,Se extrajeron solo tablas útiles con header real; se excluyeron hojas narrativas y metadata.
+Innovafirst_Dashboard_FTO_Consolidado_Multijurisdiccion.xlsx,True,1,11,Se extrajeron solo tablas útiles con header real; se excluyeron hojas narrativas y metadata.
+Innovafirst_ClaimChart_Profundo_Albemarle_US11219863.xlsx,True,4,0,Se extrajeron solo tablas útiles con header real; se excluyeron hojas narrativas y metadata.
+Innovafirst_ClaimChart_Profundo_Tier1_Complemento.xlsx,True,8,0,Se extrajeron solo tablas útiles con header real; se excluyeron hojas narrativas y metadata.

@@ -1,0 +1,9 @@
+fase,workstream,accion,responsable,prioridad,plazo,estado,dependencia,criterio_cierre,acciones
+Fase 3,Patentabilidad,Cerrar documento más cercano y matriz de diferencias técnicas,Líder IP / VT,Crítica,Semana 1,Por iniciar,Informe de Estado del Arte / Vigilancia Global,Documento más cercano validado y diferencias técnicas priorizadas,1
+Fase 3,Patentabilidad,"Solicitar y consolidar evidencia experimental de Sales CK (XRD, SEM-EDS, ICP)",Contraparte técnica,Crítica,Semana 1-2,Pendiente contraparte,Ficha Maestra del Proceso,Paquete analítico recibido y trazable,1
+Fase 3,FTO,"Validar estatus oficial por jurisdicción de familias Tier 1 (US, CN, CL, AR, CA)",Especialista FTO / apoyo legal externo,Crítica,Semana 1-2,En curso,Dashboard FTO multijurisdicción,Matriz de estatus oficial cerrada,1
+Fase 3,FTO,Cerrar memo de design-around para KCl/carnallita y arquitecturas NF/RO/ED,Líder técnico + IP,Alta,Semana 2,Por iniciar,Claim charts Tier 1,Alternativas técnicas comparadas con criterio de riesgo,1
+Fase 3,Estrategia IP,Definir frontera patente vs secreto industrial por módulo,Líder IP + gerencia,Alta,Semana 2,Por iniciar,Informe preliminar de patentabilidad,Árbol de decisión validado internamente,1
+Fase 3,Gestión,"Alinear jurisdicciones objetivo de operación, piloto, licenciamiento y filing",Gerencia + PM,Alta,Semana 1,Por iniciar,Ficha Maestra / FTO por jurisdicción,Lista país-uso aprobada,1
+Fase 3,Dashboard,Migrar capa normalizada a repositorio y refresco periódico,Data / PM,Media,Semana 2-3,Por iniciar,CSV normalizados,Versionado operativo en GitHub,1
+Fase 3,Cierre ejecutivo,Preparar resumen ejecutivo final y comité de decisión,Dirección proyecto,Alta,Semana 3,Por iniciar,Patentabilidad + FTO completos,Sesión de comité realizada,1
