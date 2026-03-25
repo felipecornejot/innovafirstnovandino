@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -40,7 +39,7 @@ EXPECTED = {
 }
 
 st.markdown(
-    f'''
+    f"""
     <style>
         .stApp {{
             background:
@@ -180,7 +179,7 @@ st.markdown(
             border-color: rgba(79,42,203,0.18);
         }}
     </style>
-    ''',
+    """,
     unsafe_allow_html=True,
 )
 
@@ -211,13 +210,13 @@ def recommendation_from_data(df: pd.DataFrame) -> str:
 def kpi_card(label: str, value: str, foot: str = "", cls: str = "") -> None:
     extra = f" {cls}" if cls else ""
     st.markdown(
-        f'''
+        f"""
         <div class="metric-card{extra}">
             <div class="metric-label">{label}</div>
             <div class="metric-value">{value}</div>
             <div class="metric-foot">{foot}</div>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
@@ -229,14 +228,14 @@ def header() -> None:
             st.image(str(logo), use_container_width=True)
     with c2:
         st.markdown(
-            '''
+            """
             <div class="hero">
                 <div class="hero-title">Novandino | Executive IP Dashboard v2.3</div>
                 <p class="hero-sub">
                     Panel gerencial basado exclusivamente en una capa de datos normalizada. Esta versión incorpora módulos de patentabilidad y hoja de ruta, además del core FTO.
                 </p>
             </div>
-            ''',
+            """,
             unsafe_allow_html=True,
         )
 
@@ -253,9 +252,11 @@ patentability = dfs["patentability"]
 
 required_missing = [EXPECTED[k] for k in ["records", "families", "jurisdictions", "claims", "sources"] if dfs[k].empty]
 if required_missing:
-    st.error("Faltan archivos normalizados base. Ejecuta primero `build_normalized_layer_v2.py` y verifica la carpeta /normalized_data.")
+    st.error("Faltan archivos CSV normalizados requeridos en /normalized_data o alguno está vacío / mal leído.")
+    st.write("Archivos faltantes o no cargados:")
     for m in required_missing:
         st.write(f"- {m}")
+    st.info("Si no los subiste manualmente, puedes generarlos con `build_normalized_layer_v2.py`.")
     st.stop()
 
 st.sidebar.markdown("## Navegación")
@@ -340,7 +341,7 @@ if page == "01 Resumen ejecutivo":
         st.plotly_chart(fig, use_container_width=True)
     with right:
         st.markdown(
-            f'''
+            f"""
             <div class="decision-box">
                 <h3>Recomendación ejecutiva automática</h3>
                 <p>{rec}</p>
@@ -350,7 +351,7 @@ if page == "01 Resumen ejecutivo":
                     <span class="risk-pill risk-green">Verde = riesgo relativo más bajo</span>
                 </div>
             </div>
-            ''',
+            """,
             unsafe_allow_html=True,
         )
         st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
@@ -373,12 +374,12 @@ elif page == "02 Riesgo FTO por jurisdicción":
             st.plotly_chart(fig, use_container_width=True)
         with c2:
             st.markdown(
-                '''
+                """
                 <div class="info-box">
                     <strong>Cómo leer la matriz territorial.</strong><br><br>
                     Un país puede tener pocas menciones y aun así exigir atención prioritaria si su riesgo máximo es alto o si concentra familias activas con claims críticos.
                 </div>
-                ''',
+                """,
                 unsafe_allow_html=True,
             )
             st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
@@ -442,7 +443,7 @@ elif page == "04 Claim charts y trazabilidad":
         if not meta.empty:
             row = meta.iloc[0]
             st.markdown(
-                f'''
+                f"""
                 <div class="decision-box">
                     <h3>Ficha rápida de la familia</h3>
                     <p><strong>Riesgo:</strong> {row['risk']}</p>
@@ -451,7 +452,7 @@ elif page == "04 Claim charts y trazabilidad":
                     <p><strong>Estatus:</strong> {row['status']}</p>
                     <p><strong>Acción:</strong> {row['action']}</p>
                 </div>
-                ''',
+                """,
                 unsafe_allow_html=True,
             )
 
