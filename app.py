@@ -1,5 +1,7 @@
+
 from __future__ import annotations
 
+import math
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -9,145 +11,229 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+# =========================================================
+# CONFIG
+# =========================================================
 st.set_page_config(
-    page_title="Novandino | IP & FTO Executive Dashboard",
-    page_icon="📘",
+    page_title="Novandino | IP & FTO Executive Dashboard v2",
+    page_icon="🧭",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-NAVY = "#333A47"
-CYAN = "#31C1D4"
+# Innovafirst + Novandino palette
+NAVY = "#333A47"          # Innovafirst main
+CYAN = "#31C1D4"          # Innovafirst accent
 SOFT = "#F0F0F0"
 PINK = "#FFB8D1"
 GRAY = "#6D6D6E"
-PURPLE = "#4F2ACB"
-PURPLE_DARK = "#3C1DAA"
-BG = "#F7F8FA"
 WHITE = "#FFFFFF"
-
-st.markdown(
-    f"""
-    <style>
-        .stApp {{
-            background: linear-gradient(180deg, #fbfcfe 0%, #f5f7fb 100%);
-        }}
-        .main .block-container {{
-            padding-top: 1.4rem;
-            padding-bottom: 2rem;
-            max-width: 1450px;
-        }}
-        .hero {{
-            background:
-              radial-gradient(circle at top right, rgba(49,193,212,0.16), transparent 22%),
-              radial-gradient(circle at left center, rgba(79,42,203,0.10), transparent 28%),
-              linear-gradient(135deg, rgba(255,255,255,0.96), rgba(240,240,240,0.96));
-            border: 1px solid rgba(51,58,71,0.08);
-            border-radius: 24px;
-            padding: 1.2rem 1.35rem 1.1rem 1.35rem;
-            box-shadow: 0 10px 28px rgba(51,58,71,0.08);
-            margin-bottom: 1rem;
-        }}
-        .hero h1 {{
-            font-size: 2.0rem;
-            line-height: 1.1;
-            color: {NAVY};
-            margin: 0 0 0.35rem 0;
-            font-weight: 800;
-        }}
-        .hero p {{
-            color: {GRAY};
-            margin: 0;
-            font-size: 0.98rem;
-        }}
-        .section-title {{
-            color: {NAVY};
-            font-size: 1.15rem;
-            font-weight: 800;
-            margin: 0.5rem 0 0.8rem 0;
-        }}
-        .kpi-card {{
-            background: rgba(255,255,255,0.94);
-            border: 1px solid rgba(51,58,71,0.07);
-            border-left: 5px solid {CYAN};
-            border-radius: 18px;
-            padding: 0.9rem 1rem 0.8rem 1rem;
-            box-shadow: 0 8px 20px rgba(51,58,71,0.05);
-            min-height: 112px;
-        }}
-        .kpi-card.purple {{ border-left-color: {PURPLE}; }}
-        .kpi-card.pink {{ border-left-color: {PINK}; }}
-        .kpi-label {{
-            color: {GRAY};
-            font-size: 0.82rem;
-            margin-bottom: 0.25rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-        }}
-        .kpi-value {{
-            color: {NAVY};
-            font-size: 1.85rem;
-            line-height: 1.0;
-            font-weight: 800;
-        }}
-        .kpi-foot {{
-            color: {GRAY};
-            font-size: 0.82rem;
-            margin-top: 0.4rem;
-        }}
-        .info-box {{
-            background: rgba(240,240,240,0.9);
-            border-left: 5px solid {CYAN};
-            border-radius: 18px;
-            padding: 0.9rem 1rem;
-            color: {NAVY};
-            margin-top: 0.5rem;
-        }}
-        .decision-box {{
-            background: linear-gradient(135deg, rgba(79,42,203,0.08), rgba(49,193,212,0.08));
-            border: 1px solid rgba(79,42,203,0.12);
-            border-radius: 18px;
-            padding: 1rem 1rem 0.85rem 1rem;
-            color: {NAVY};
-            box-shadow: 0 8px 18px rgba(79,42,203,0.05);
-        }}
-        .decision-box h3 {{ margin: 0 0 0.4rem 0; font-size: 1rem; color: {PURPLE_DARK}; }}
-        .pill {{
-            display: inline-block;
-            padding: 0.18rem 0.55rem;
-            border-radius: 999px;
-            font-size: 0.76rem;
-            font-weight: 800;
-            letter-spacing: 0.02em;
-            margin-right: 0.25rem;
-            margin-bottom: 0.2rem;
-        }}
-        .pill.red {{ background: rgba(255, 107, 107, 0.14); color: #C23B3B; }}
-        .pill.yellow {{ background: rgba(255, 200, 87, 0.20); color: #8A6700; }}
-        .pill.green {{ background: rgba(80, 200, 120, 0.17); color: #287A39; }}
-        .small-note {{ color: {GRAY}; font-size: 0.82rem; margin-top: 0.2rem; }}
-        .table-caption {{ color: {GRAY}; font-size: 0.86rem; margin: -0.25rem 0 0.55rem 0; }}
-        section[data-testid="stSidebar"] {{
-            background: linear-gradient(180deg, rgba(51,58,71,0.98), rgba(60,29,170,0.97));
-            color: white;
-        }}
-        section[data-testid="stSidebar"] * {{ color: white !important; }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+NOVA_PURPLE = "#4F2ACB"   # Novandino-inspired
+NOVA_PURPLE_DARK = "#3C1DAA"
+NOVA_PURPLE_SOFT = "#EDE8FF"
+BG = "#F7F8FB"
+RED = "#E16060"
+YELLOW = "#D8A22B"
+GREEN = "#3B9B6B"
 
 DATA_DIR = Path(__file__).parent / "data"
 ASSETS_DIR = Path(__file__).parent / "assets"
-EXPECTED_FILES = {
+
+REQUIRED_FILES = {
     "matriz_patentes": "Innovafirst_Matriz_Maestra_Patentes_Consolidada_Fase2.xlsx",
     "screening_amplio": "Innovafirst_Screening_Amplio_Exhaustivo_Razonable_Fase2.xlsx",
     "dashboard_fto": "Innovafirst_Dashboard_FTO_Consolidado_Multijurisdiccion.xlsx",
     "claimchart_core": "Innovafirst_ClaimChart_Profundo_Albemarle_US11219863.xlsx",
     "claimchart_tier1b": "Innovafirst_ClaimChart_Profundo_Tier1_Complemento.xlsx",
 }
-OPTIONAL_LOGO = "novandino_logo.png"
+
+OPTIONAL_FILES = {
+    "roadmap": "Innovafirst_Hoja_de_Ruta_Implementacion.xlsx",
+    "patentability": "Innovafirst_Informe_Preliminar_Patentabilidad.xlsx",
+    "shortlist": "Innovafirst_Shortlist_Critica_Consolidada_Post_Screening.xlsx",
+    "logo_novandino": "novandino_logo.png",
+}
+
+# =========================================================
+# STYLE
+# =========================================================
+st.markdown(
+    f"""
+    <style>
+        :root {{
+            --navy: {NAVY};
+            --cyan: {CYAN};
+            --soft: {SOFT};
+            --pink: {PINK};
+            --gray: {GRAY};
+            --white: {WHITE};
+            --purple: {NOVA_PURPLE};
+            --purple-dark: {NOVA_PURPLE_DARK};
+            --purple-soft: {NOVA_PURPLE_SOFT};
+            --red: {RED};
+            --yellow: {YELLOW};
+            --green: {GREEN};
+            --bg: {BG};
+        }}
+        .stApp {{
+            background:
+                radial-gradient(circle at top right, rgba(79,42,203,0.08), transparent 18%),
+                radial-gradient(circle at left top, rgba(49,193,212,0.10), transparent 20%),
+                linear-gradient(180deg, #fafbfe 0%, #f4f7fb 100%);
+        }}
+        .main .block-container {{
+            max-width: 1500px;
+            padding-top: 1.2rem;
+            padding-bottom: 2rem;
+        }}
+        section[data-testid="stSidebar"] {{
+            background: linear-gradient(180deg, rgba(51,58,71,0.98), rgba(60,29,170,0.98));
+        }}
+        .hero {{
+            background:
+                linear-gradient(120deg, rgba(255,255,255,0.98), rgba(240,240,240,0.96)),
+                radial-gradient(circle at top right, rgba(49,193,212,0.08), transparent 20%);
+            border: 1px solid rgba(51,58,71,0.08);
+            border-radius: 26px;
+            box-shadow: 0 14px 30px rgba(51,58,71,0.07);
+            padding: 1.15rem 1.35rem 1.05rem 1.35rem;
+            margin-bottom: 1rem;
+        }}
+        .hero-title {{
+            color: {NAVY};
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 0 0.2rem 0;
+            line-height: 1.05;
+        }}
+        .hero-sub {{
+            color: {GRAY};
+            font-size: 0.98rem;
+            margin: 0;
+        }}
+        .section-title {{
+            color: {NAVY};
+            font-size: 1.15rem;
+            font-weight: 850;
+            margin: 0.35rem 0 0.8rem 0;
+        }}
+        .subnote {{
+            color: {GRAY};
+            font-size: 0.85rem;
+            margin-top: -0.25rem;
+            margin-bottom: 0.65rem;
+        }}
+        .metric-card {{
+            background: rgba(255,255,255,0.96);
+            border: 1px solid rgba(51,58,71,0.08);
+            border-left: 5px solid {CYAN};
+            border-radius: 18px;
+            padding: 0.9rem 1rem;
+            min-height: 114px;
+            box-shadow: 0 10px 22px rgba(51,58,71,0.05);
+        }}
+        .metric-card.purple {{ border-left-color: {NOVA_PURPLE}; }}
+        .metric-card.pink {{ border-left-color: {PINK}; }}
+        .metric-card.green {{ border-left-color: {GREEN}; }}
+        .metric-label {{
+            color: {GRAY};
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.3rem;
+        }}
+        .metric-value {{
+            color: {NAVY};
+            font-size: 1.8rem;
+            font-weight: 900;
+            line-height: 1.0;
+        }}
+        .metric-foot {{
+            color: {GRAY};
+            font-size: 0.82rem;
+            margin-top: 0.42rem;
+        }}
+        .decision-box {{
+            background: linear-gradient(135deg, rgba(79,42,203,0.08), rgba(49,193,212,0.08));
+            border: 1px solid rgba(79,42,203,0.12);
+            border-radius: 18px;
+            padding: 1rem 1rem 0.9rem 1rem;
+            color: {NAVY};
+            box-shadow: 0 10px 24px rgba(79,42,203,0.05);
+        }}
+        .decision-box h3 {{
+            margin: 0 0 0.35rem 0;
+            color: {NOVA_PURPLE_DARK};
+            font-size: 1rem;
+        }}
+        .info-box {{
+            background: rgba(240,240,240,0.92);
+            border-left: 5px solid {CYAN};
+            border-radius: 18px;
+            padding: 0.9rem 1rem;
+            color: {NAVY};
+        }}
+        .risk-pill {{
+            display: inline-block;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            margin-right: 0.25rem;
+            margin-bottom: 0.2rem;
+        }}
+        .risk-red {{ background: rgba(225,96,96,0.14); color: {RED}; }}
+        .risk-yellow {{ background: rgba(216,162,43,0.18); color: {YELLOW}; }}
+        .risk-green {{ background: rgba(59,155,107,0.15); color: {GREEN}; }}
+        .risk-blue {{ background: rgba(49,193,212,0.14); color: {NAVY}; }}
+        .footer-note {{
+            color: {GRAY};
+            font-size: 0.82rem;
+            margin-top: 1rem;
+        }}
+        .small-kpi {{
+            background: rgba(255,255,255,0.94);
+            border: 1px solid rgba(51,58,71,0.08);
+            border-radius: 16px;
+            padding: 0.7rem 0.9rem;
+        }}
+        .small-kpi .label {{
+            color: {GRAY};
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }}
+        .small-kpi .value {{
+            color: {NAVY};
+            font-size: 1.25rem;
+            font-weight: 900;
+        }}
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 0.4rem;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            background: rgba(255,255,255,0.92);
+            border-radius: 14px;
+            padding: 0.5rem 0.9rem;
+            border: 1px solid rgba(51,58,71,0.08);
+        }}
+        .stTabs [aria-selected="true"] {{
+            background: rgba(79,42,203,0.10);
+            border-color: rgba(79,42,203,0.18);
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# =========================================================
+# HELPERS
+# =========================================================
+def normalize_text(v: object) -> str:
+    if pd.isna(v):
+        return ""
+    return str(v).strip()
 
 
 def snake(text: str) -> str:
@@ -161,20 +247,19 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def pick_column(df: pd.DataFrame, keywords: List[str]) -> Optional[str]:
-    cols = list(df.columns)
-    for kw in keywords:
-        for col in cols:
-            if kw in col:
-                return col
+def pick_col(df: pd.DataFrame, keys: List[str]) -> Optional[str]:
+    for k in keys:
+        for c in df.columns:
+            if k in c:
+                return c
     return None
 
 
-def normalize_risk(value: object) -> str:
-    t = str(value).strip().lower() if value is not None else ""
-    if not t or t == "nan":
+def normalize_risk(v: object) -> str:
+    t = normalize_text(v).lower()
+    if not t:
         return "No definido"
-    if any(x in t for x in ["alto", "high", "red", "rojo", "critical", "crítico"]):
+    if any(x in t for x in ["alto", "high", "critical", "critico", "crítico", "rojo", "red"]):
         return "Alto"
     if any(x in t for x in ["medio", "medium", "amber", "yellow", "amarillo", "moderado"]):
         return "Medio"
@@ -182,179 +267,220 @@ def normalize_risk(value: object) -> str:
         return "Bajo"
     if any(x in t for x in ["monitor", "watch", "seguimiento"]):
         return "Monitor"
-    return str(value)
+    return str(v)
 
 
-def risk_to_num(value: object) -> int:
-    value = normalize_risk(value)
-    return {"Alto": 3, "Medio": 2, "Bajo": 1, "Monitor": 1, "No definido": 0}.get(value, 0)
+def risk_num(v: object) -> int:
+    return {"Alto": 3, "Medio": 2, "Bajo": 1, "Monitor": 1, "No definido": 0}.get(normalize_risk(v), 0)
+
+
+def status_bucket(v: object) -> str:
+    t = normalize_text(v).lower()
+    if not t:
+        return "No definido"
+    if any(x in t for x in ["active", "vigente", "granted", "grant", "issued"]):
+        return "Activo / concedido"
+    if any(x in t for x in ["pending", "solicitud", "en tramite", "en trámite"]):
+        return "Pending / en trámite"
+    if any(x in t for x in ["expired", "ceased", "withdrawn", "abandoned", "lapsed", "terminated"]):
+        return "No activo"
+    if "verify" in t or "pendiente" in t:
+        return "Verificar"
+    return str(v)
+
+
+def recommendation_from_data(df: pd.DataFrame) -> str:
+    if df.empty:
+        return "Cargar los archivos estructurados para habilitar recomendaciones ejecutivas."
+    high = int((df["_risk"] == "Alto").sum())
+    medium = int((df["_risk"] == "Medio").sum())
+    active = int((df["_status_bucket"] == "Activo / concedido").sum())
+    if high >= 8:
+        return "Priorizar revisión legal externa y diseño-around en familias críticas antes de cualquier decisión territorial o de filing adicional."
+    if high >= 3:
+        return "Mantener control activo sobre familias rojas, cerrar validación de estatus y modular decisiones país por país."
+    if medium >= 10 and active >= 5:
+        return "El universo requiere monitoreo intensivo, pero aún parece gestionable si se estructura un plan de seguimiento y cierre técnico."
+    return "La base actual sugiere un escenario controlable; conviene endurecer patentabilidad y hoja de ruta antes de mover la estrategia de protección."
+
+
+def simple_match_level(text: str) -> str:
+    t = normalize_text(text).lower()
+    if any(x in t for x in ["literal", "alto", "high", "match completo", "coincide"]):
+        return "Coincidencia alta"
+    if any(x in t for x in ["parcial", "partial", "media"]):
+        return "Coincidencia parcial"
+    if any(x in t for x in ["diferencia", "no coincide", "low", "baja"]):
+        return "Coincidencia baja"
+    return "No definido"
 
 
 @st.cache_data(show_spinner=False)
-def load_excel_book(path: Path) -> Dict[str, pd.DataFrame]:
+def read_book(path: Path) -> Dict[str, pd.DataFrame]:
     if not path.exists():
         return {}
     xls = pd.ExcelFile(path)
-    return {sheet: normalize_columns(pd.read_excel(path, sheet_name=sheet)) for sheet in xls.sheet_names}
+    out = {}
+    for sheet in xls.sheet_names:
+        df = pd.read_excel(path, sheet_name=sheet)
+        if df is None or df.empty:
+            continue
+        out[sheet] = normalize_columns(df)
+    return out
 
 
 @st.cache_data(show_spinner=False)
-def load_all_books() -> Dict[str, Dict[str, pd.DataFrame]]:
-    return {k: load_excel_book(DATA_DIR / v) for k, v in EXPECTED_FILES.items()}
+def load_books() -> Dict[str, Dict[str, pd.DataFrame]]:
+    all_books = {}
+    for key, fname in REQUIRED_FILES.items():
+        all_books[key] = read_book(DATA_DIR / fname)
+    return all_books
 
 
 def enrich(df: pd.DataFrame, source_file: str, sheet: str) -> pd.DataFrame:
-    work = df.copy()
-    family_col = pick_column(work, ["family", "familia", "patent_family", "family_name", "patent"])
-    jurisdiction_col = pick_column(work, ["jurisdiction", "country", "pais", "país", "territory"])
-    risk_col = pick_column(work, ["risk", "riesgo", "semaforo", "semáforo"])
-    score_col = pick_column(work, ["score", "puntaje", "ranking", "priority"])
-    module_col = pick_column(work, ["module", "modulo", "módulo", "cluster"])
-    status_col = pick_column(work, ["status", "estado", "legal_status"])
-    action_col = pick_column(work, ["action", "accion", "acción", "recommendation", "recomendacion", "recomendación"])
-    assignee_col = pick_column(work, ["assignee", "titular", "owner", "applicant", "company"])
-    claim_col = pick_column(work, ["claim", "reivindic"])
-    type_col = pick_column(work, ["type", "tipo", "category", "categoria"])
+    family = pick_col(df, ["family", "familia", "patent"])
+    country = pick_col(df, ["jurisdiction", "country", "pais", "país", "territory"])
+    risk = pick_col(df, ["risk", "riesgo", "semaforo", "semáforo"])
+    score = pick_col(df, ["score", "puntaje", "ranking", "priority"])
+    module = pick_col(df, ["module", "modulo", "módulo", "cluster"])
+    status = pick_col(df, ["status", "estado", "legal_status"])
+    action = pick_col(df, ["action", "recomend", "recommendation", "accion", "acción"])
+    assignee = pick_col(df, ["assignee", "titular", "owner", "applicant", "company"])
+    claim = pick_col(df, ["claim", "reivindic"])
+    doc_type = pick_col(df, ["type", "tipo", "category", "categoria"])
 
-    work["_source_file"] = source_file
-    work["_sheet"] = sheet
-    work["_family"] = work[family_col].astype(str) if family_col else ""
-    work["_jurisdiction"] = work[jurisdiction_col].astype(str) if jurisdiction_col else ""
-    work["_risk"] = work[risk_col].map(normalize_risk) if risk_col else "No definido"
-    work["_risk_num"] = pd.to_numeric(work[score_col], errors="coerce") if score_col else work["_risk"].map(risk_to_num)
-    work["_module"] = work[module_col].astype(str) if module_col else "No definido"
-    work["_status"] = work[status_col].astype(str) if status_col else "No definido"
-    work["_action"] = work[action_col].astype(str) if action_col else "No definida"
-    work["_assignee"] = work[assignee_col].astype(str) if assignee_col else "No definido"
-    work["_claim"] = work[claim_col].astype(str) if claim_col else ""
-    work["_record_type"] = work[type_col].astype(str) if type_col else sheet
-    return work
+    out = df.copy()
+    out["_source_file"] = source_file
+    out["_sheet"] = sheet
+    out["_family"] = out[family].astype(str) if family else ""
+    out["_jurisdiction"] = out[country].astype(str) if country else ""
+    out["_risk_raw"] = out[risk] if risk else ""
+    out["_risk"] = out["_risk_raw"].map(normalize_risk)
+    out["_risk_num"] = pd.to_numeric(out[score], errors="coerce") if score else None
+    if "_risk_num" not in out or out["_risk_num"].isna().all():
+        out["_risk_num"] = out["_risk"].map(risk_num)
+    out["_module"] = out[module].astype(str) if module else "No definido"
+    out["_status"] = out[status].astype(str) if status else "No definido"
+    out["_status_bucket"] = out["_status"].map(status_bucket)
+    out["_action"] = out[action].astype(str) if action else "No definida"
+    out["_assignee"] = out[assignee].astype(str) if assignee else "No definido"
+    out["_claim"] = out[claim].astype(str) if claim else ""
+    out["_record_type"] = out[doc_type].astype(str) if doc_type else sheet
+    return out
 
 
 @st.cache_data(show_spinner=False)
-def build_master_table() -> pd.DataFrame:
-    books = load_all_books()
+def build_master() -> pd.DataFrame:
+    books = load_books()
     frames = []
-    for source_key, content in books.items():
-        fname = EXPECTED_FILES[source_key]
-        for sheet, df in content.items():
-            if df is not None and not df.empty:
-                frames.append(enrich(df, fname, sheet))
+    for key, book in books.items():
+        fname = REQUIRED_FILES[key]
+        for sheet, df in book.items():
+            frames.append(enrich(df, fname, sheet))
     if not frames:
         return pd.DataFrame()
     master = pd.concat(frames, ignore_index=True, sort=False)
-    master["_risk_num"] = pd.to_numeric(master["_risk_num"], errors="coerce").fillna(master["_risk"].map(risk_to_num)).fillna(0)
-    for col in ["_family", "_jurisdiction", "_module", "_status", "_action", "_assignee", "_claim"]:
-        master[col] = master[col].fillna("").astype(str).str.strip()
+    for c in ["_family", "_jurisdiction", "_module", "_status", "_action", "_assignee", "_claim", "_record_type"]:
+        master[c] = master[c].fillna("").astype(str).str.strip()
+    master["_risk_num"] = pd.to_numeric(master["_risk_num"], errors="coerce").fillna(master["_risk"].map(risk_num))
     return master
 
 
 def build_family_summary(master: pd.DataFrame) -> pd.DataFrame:
     if master.empty:
         return pd.DataFrame()
-    m = master[master["_family"] != ""]
-    if m.empty:
+    fam = master[master["_family"] != ""].copy()
+    if fam.empty:
         return pd.DataFrame()
-    agg = (
-        m.groupby("_family", dropna=False)
+    out = (
+        fam.groupby("_family")
         .agg(
             risk_num=("_risk_num", "max"),
-            jurisdictions=("_jurisdiction", lambda s: ", ".join(sorted({x for x in s if x}))),
             assignee=("_assignee", lambda s: next((x for x in s if x and x != "No definido"), "No definido")),
             module=("_module", lambda s: next((x for x in s if x and x != "No definido"), "No definido")),
-            status=("_status", lambda s: next((x for x in s if x and x != "No definido"), "No definido")),
+            status=("_status_bucket", lambda s: next((x for x in s if x and x != "No definido"), "No definido")),
             action=("_action", lambda s: next((x for x in s if x and x != "No definida"), "No definida")),
+            jurisdictions=("_jurisdiction", lambda s: ", ".join(sorted({x for x in s if x}))),
             rows=("_family", "size"),
+            sources=("_source_file", lambda s: ", ".join(sorted(set(s)))),
         )
         .reset_index()
     )
-    agg["risk"] = agg["risk_num"].map({3: "Alto", 2: "Medio", 1: "Bajo", 0: "No definido"})
-    return agg.sort_values(["risk_num", "rows"], ascending=[False, False])
+    out["risk"] = out["risk_num"].map({3: "Alto", 2: "Medio", 1: "Bajo", 0: "No definido"})
+    return out.sort_values(["risk_num", "rows"], ascending=[False, False])
 
 
-def build_country_summary(master: pd.DataFrame) -> pd.DataFrame:
+def build_jurisdiction_summary(master: pd.DataFrame) -> pd.DataFrame:
     if master.empty:
         return pd.DataFrame()
-    m = master[master["_jurisdiction"] != ""]
-    if m.empty:
+    j = master[master["_jurisdiction"] != ""].copy()
+    if j.empty:
         return pd.DataFrame()
-    summary = (
-        m.groupby("_jurisdiction")
+    out = (
+        j.groupby("_jurisdiction")
         .agg(
-            total_registros=("_jurisdiction", "size"),
+            total=("_jurisdiction", "size"),
             familias=("_family", lambda s: len({x for x in s if x})),
             riesgo_promedio=("_risk_num", "mean"),
             riesgo_max=("_risk_num", "max"),
-            alto=("_risk", lambda s: int((s == "Alto").sum())),
-            medio=("_risk", lambda s: int((s == "Medio").sum())),
-            bajo=("_risk", lambda s: int((s == "Bajo").sum())),
+            rojos=("_risk", lambda s: int((s == "Alto").sum())),
+            ambar=("_risk", lambda s: int((s == "Medio").sum())),
+            verdes=("_risk", lambda s: int((s == "Bajo").sum())),
+            activos=("_status_bucket", lambda s: int((s == "Activo / concedido").sum())),
         )
         .reset_index()
-        .sort_values(["riesgo_max", "riesgo_promedio", "familias"], ascending=[False, False, False])
     )
-    summary["semaforo"] = summary["riesgo_max"].map({3: "Alto", 2: "Medio", 1: "Bajo", 0: "No definido"})
-    return summary
+    out["semaforo"] = out["riesgo_max"].map({3: "Alto", 2: "Medio", 1: "Bajo", 0: "No definido"})
+    return out.sort_values(["riesgo_max", "riesgo_promedio", "familias"], ascending=[False, False, False])
 
 
-def build_claim_table(master: pd.DataFrame) -> pd.DataFrame:
+def build_claim_summary(master: pd.DataFrame) -> pd.DataFrame:
     if master.empty:
         return pd.DataFrame()
-    return master[(master["_claim"] != "") | (master["_sheet"].str.contains("claim", case=False, na=False))].copy()
+    c = master[(master["_claim"] != "") | (master["_sheet"].str.contains("claim", case=False, na=False))].copy()
+    if c.empty:
+        return pd.DataFrame()
+    match_guess_col = pick_col(c, ["match", "coincid", "nivel"])
+    if match_guess_col:
+        c["_match_level"] = c[match_guess_col].astype(str).map(simple_match_level)
+    else:
+        c["_match_level"] = "No definido"
+    return c
 
 
-def get_missing_files() -> List[str]:
-    return [fname for fname in EXPECTED_FILES.values() if not (DATA_DIR / fname).exists()]
-
-
-def recommendation_text(df: pd.DataFrame) -> str:
-    if df.empty:
-        return "Completar la carga de datos estructurados para habilitar una lectura ejecutiva confiable."
-    high = int((df["_risk"] == "Alto").sum())
-    medium = int((df["_risk"] == "Medio").sum())
-    pending = int(df["_status"].str.contains("pending|verify|pendiente", case=False, na=False).sum())
-    if high >= 5:
-        return "Priorizar revisión legal externa y diseño-around sobre las familias con riesgo alto antes de cualquier decisión de implementación territorial."
-    if high >= 1:
-        return "Mantener control de familias críticas activas y cerrar validación fina de jurisdicciones antes de ampliar despliegue o filing."
-    if medium >= 5:
-        return "Avanzar con monitoreo activo, cierre de brechas técnicas y validación de patentabilidad antes de mover la estrategia territorial."
-    if pending >= 3:
-        return "Completar verificación de estatus y claims antes de endurecer conclusiones ejecutivas."
-    return "El portafolio aparece controlable en esta iteración; conviene consolidar patentabilidad y hoja de ruta IP."
-
-
-def kpi_card(label: str, value: str, foot: str = "", accent: str = "") -> None:
-    cls = "kpi-card"
-    if accent == "purple":
-        cls += " purple"
-    elif accent == "pink":
-        cls += " pink"
+def kpi_card(label: str, value: str, foot: str = "", cls: str = "") -> None:
+    extra = f" {cls}" if cls else ""
     st.markdown(
         f"""
-        <div class="{cls}">
-            <div class="kpi-label">{label}</div>
-            <div class="kpi-value">{value}</div>
-            <div class="kpi-foot">{foot}</div>
+        <div class="metric-card{extra}">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            <div class="metric-foot">{foot}</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def brand_header() -> None:
-    logo_path = ASSETS_DIR / OPTIONAL_LOGO
-    left, right = st.columns([1.2, 4])
-    with left:
-        if logo_path.exists():
-            st.image(str(logo_path), use_container_width=True)
-    with right:
+def get_missing_files() -> List[str]:
+    return [fname for fname in REQUIRED_FILES.values() if not (DATA_DIR / fname).exists()]
+
+
+def header() -> None:
+    logo = ASSETS_DIR / OPTIONAL_FILES["logo_novandino"]
+    c1, c2 = st.columns([1, 4])
+    with c1:
+        if logo.exists():
+            st.image(str(logo), use_container_width=True)
+    with c2:
         st.markdown(
             """
             <div class="hero">
-                <h1>Novandino | IP &amp; FTO Executive Dashboard</h1>
-                <p>
-                    Panel ejecutivo para vigilancia tecnológica, patentabilidad y libertad de operación,
-                    con estética Innovafirst y lectura simple para toma de decisiones gerenciales.
+                <div class="hero-title">Novandino | Executive IP Dashboard v2</div>
+                <p class="hero-sub">
+                    Panel gerencial para libertad de operación, patentabilidad preliminar,
+                    vigilancia tecnológica y seguimiento ejecutivo. Diseñado con lógica Innovafirst
+                    y acentos visuales armonizados con Novandino.
                 </p>
             </div>
             """,
@@ -362,175 +488,318 @@ def brand_header() -> None:
         )
 
 
-def section_filters(master: pd.DataFrame) -> pd.DataFrame:
-    jurisdictions = sorted([x for x in master["_jurisdiction"].dropna().unique() if x])
-    risks = sorted([x for x in master["_risk"].dropna().unique() if x])
-    modules = sorted([x for x in master["_module"].dropna().unique() if x])
-
-    st.sidebar.markdown("### Filtros")
-    selected_j = st.sidebar.multiselect("Jurisdicción", jurisdictions)
-    selected_r = st.sidebar.multiselect("Riesgo", risks, default=risks)
-    selected_m = st.sidebar.multiselect("Módulo", modules)
-
-    filtered = master.copy()
-    if selected_j:
-        filtered = filtered[filtered["_jurisdiction"].isin(selected_j)]
-    if selected_r:
-        filtered = filtered[filtered["_risk"].isin(selected_r)]
-    if selected_m:
-        filtered = filtered[filtered["_module"].isin(selected_m)]
-    return filtered
-
-
-master = build_master_table()
+# =========================================================
+# LOAD
+# =========================================================
+master = build_master()
 family_summary = build_family_summary(master)
-country_summary = build_country_summary(master)
-claims_table = build_claim_table(master)
+jurisdiction_summary = build_jurisdiction_summary(master)
+claim_summary = build_claim_summary(master)
 missing_files = get_missing_files()
 
-brand_header()
+header()
+
 if master.empty:
-    st.error("No se encontraron archivos estructurados en la carpeta /data. Revisa el README y los nombres exactos.")
+    st.error("No se encontraron datos estructurados en /data. Revisa el README y los nombres exactos de los Excel.")
     st.stop()
 
 if missing_files:
-    st.warning("Faltan archivos esperados para la lectura completa del dashboard:")
-    for m in missing_files:
-        st.write(f"- {m}")
+    st.warning("Faltan archivos esperados. La app sigue funcionando con lo disponible, pero el panorama quedará incompleto.")
+    for mf in missing_files:
+        st.write(f"- {mf}")
 
+# =========================================================
+# SIDEBAR
+# =========================================================
 st.sidebar.markdown("## Navegación")
 page = st.sidebar.radio(
     "Ir a",
     [
-        "Resumen ejecutivo",
-        "Riesgo FTO por jurisdicción",
-        "Familias y portafolio activo",
-        "Claim charts y trazabilidad",
-        "Salud de datos y control",
+        "01 Resumen ejecutivo",
+        "02 Riesgo FTO por jurisdicción",
+        "03 Familias activas y ranking",
+        "04 Claim charts y trazabilidad",
+        "05 Salud de datos",
     ],
 )
-filtered_master = section_filters(master)
 
-if page == "Resumen ejecutivo":
+st.sidebar.markdown("## Filtros")
+jur_options = sorted([x for x in master["_jurisdiction"].dropna().unique() if x])
+risk_options = sorted([x for x in master["_risk"].dropna().unique() if x])
+module_options = sorted([x for x in master["_module"].dropna().unique() if x])
+
+sel_jur = st.sidebar.multiselect("Jurisdicción", jur_options)
+sel_risk = st.sidebar.multiselect("Riesgo", risk_options, default=risk_options)
+sel_mod = st.sidebar.multiselect("Módulo", module_options)
+
+filtered = master.copy()
+if sel_jur:
+    filtered = filtered[filtered["_jurisdiction"].isin(sel_jur)]
+if sel_risk:
+    filtered = filtered[filtered["_risk"].isin(sel_risk)]
+if sel_mod:
+    filtered = filtered[filtered["_module"].isin(sel_mod)]
+
+# recompute filtered summaries
+family_filtered = build_family_summary(filtered)
+jur_filtered = build_jurisdiction_summary(filtered)
+claim_filtered = build_claim_summary(filtered)
+
+# =========================================================
+# PAGE 01
+# =========================================================
+if page == "01 Resumen ejecutivo":
     st.markdown('<div class="section-title">Cockpit ejecutivo</div>', unsafe_allow_html=True)
-    total_families = int(family_summary["_family"].nunique()) if not family_summary.empty else 0
-    total_countries = int(country_summary["_jurisdiction"].nunique()) if not country_summary.empty else 0
-    high_families = int((family_summary["risk"] == "Alto").sum()) if not family_summary.empty else 0
-    medium_families = int((family_summary["risk"] == "Medio").sum()) if not family_summary.empty else 0
-    active_mentions = int(master["_status"].str.contains("active|vigente|granted|grant", case=False, na=False).sum())
-    recommendation = recommendation_text(filtered_master if not filtered_master.empty else master)
+    st.markdown('<div class="subnote">Lectura rápida para directorio, cliente o comité. Prioriza claridad, semáforo y acción recomendada.</div>', unsafe_allow_html=True)
+
+    total_families = int(family_filtered["_family"].nunique()) if not family_filtered.empty else 0
+    total_jur = int(jur_filtered["_jurisdiction"].nunique()) if not jur_filtered.empty else 0
+    high_fam = int((family_filtered["risk"] == "Alto").sum()) if not family_filtered.empty else 0
+    medium_fam = int((family_filtered["risk"] == "Medio").sum()) if not family_filtered.empty else 0
+    active_mentions = int((filtered["_status_bucket"] == "Activo / concedido").sum()) if not filtered.empty else 0
+    rec = recommendation_from_data(filtered)
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    with c1: kpi_card("Familias identificadas", f"{total_families}", "Universo estructurado cargado", "purple")
-    with c2: kpi_card("Jurisdicciones", f"{total_countries}", "Cobertura territorial visible")
-    with c3: kpi_card("Familias en rojo", f"{high_families}", "Riesgo alto FTO", "pink")
-    with c4: kpi_card("Familias en ámbar", f"{medium_families}", "Requieren control activo")
-    with c5: kpi_card("Menciones activas", f"{active_mentions}", "Estatus con señal activa o concedida")
+    with c1:
+        kpi_card("Familias visibles", f"{total_families}", "Universo cargado en la vista", "purple")
+    with c2:
+        kpi_card("Jurisdicciones", f"{total_jur}", "Cobertura territorial en filtros")
+    with c3:
+        kpi_card("Riesgo alto", f"{high_fam}", "Familias con alerta roja", "pink")
+    with c4:
+        kpi_card("Riesgo medio", f"{medium_fam}", "Requieren control activo")
+    with c5:
+        kpi_card("Señales activas", f"{active_mentions}", "Menciones activas o concedidas", "green")
 
-    left, right = st.columns([1.55, 1])
+    left, right = st.columns([1.5, 1])
     with left:
-        st.markdown('<div class="section-title">Riesgo por jurisdicción</div>', unsafe_allow_html=True)
-        if not country_summary.empty:
-            chart = country_summary.head(15).copy()
-            fig = px.bar(chart, x="_jurisdiction", y="riesgo_promedio", color="semaforo", text="familias",
-                         color_discrete_map={"Alto": PINK, "Medio": CYAN, "Bajo": PURPLE, "No definido": GRAY})
-            fig.update_layout(height=390, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                              xaxis_title="Jurisdicción", yaxis_title="Riesgo promedio", margin=dict(l=10,r=10,t=10,b=10))
+        st.markdown('<div class="section-title">Mapa ejecutivo de riesgo por jurisdicción</div>', unsafe_allow_html=True)
+        if not jur_filtered.empty:
+            chart = jur_filtered.head(15).copy()
+            fig = px.bar(
+                chart,
+                x="_jurisdiction",
+                y="riesgo_promedio",
+                color="semaforo",
+                color_discrete_map={"Alto": PINK, "Medio": CYAN, "Bajo": NOVA_PURPLE, "No definido": GRAY},
+                text="familias",
+                hover_data=["activos", "rojos", "ambar", "verdes"],
+            )
+            fig.update_layout(
+                height=400,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(l=10, r=10, t=10, b=10),
+                xaxis_title="Jurisdicción",
+                yaxis_title="Riesgo promedio",
+                legend_title="Semáforo",
+            )
             st.plotly_chart(fig, use_container_width=True)
     with right:
-        st.markdown(f"""
+        st.markdown(
+            f"""
             <div class="decision-box">
-                <h3>Recomendación ejecutiva</h3>
-                <p>{recommendation}</p>
-                <div style="margin-top:0.35rem;">
-                    <span class="pill red">Rojo = bloqueo o revisión legal inmediata</span>
-                    <span class="pill yellow">Ámbar = monitoreo y diseño-around</span>
-                    <span class="pill green">Verde = bajo riesgo relativo</span>
+                <h3>Recomendación ejecutiva automática</h3>
+                <p>{rec}</p>
+                <div style="margin-top:0.3rem;">
+                    <span class="risk-pill risk-red">Rojo = bloqueo o revisión legal inmediata</span>
+                    <span class="risk-pill risk-yellow">Ámbar = diseño-around / monitoreo</span>
+                    <span class="risk-pill risk-green">Verde = riesgo relativo más bajo</span>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Top familias activas</div>', unsafe_allow_html=True)
-        st.dataframe(family_summary.head(8)[["_family", "risk", "module", "assignee", "action"]], use_container_width=True, hide_index=True)
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Top familias visibles</div>', unsafe_allow_html=True)
+        top = family_filtered.head(8)[["_family", "risk", "module", "assignee", "action"]]
+        st.dataframe(top, use_container_width=True, hide_index=True)
 
-    b1, b2 = st.columns(2)
+    b1, b2 = st.columns([1, 1])
     with b1:
-        st.markdown('<div class="section-title">Distribución de riesgo</div>', unsafe_allow_html=True)
-        risk_counts = family_summary["risk"].value_counts().reset_index()
-        risk_counts.columns = ["Riesgo", "Cantidad"]
-        fig2 = px.pie(risk_counts, names="Riesgo", values="Cantidad", color="Riesgo",
-                      color_discrete_map={"Alto": PINK, "Medio": CYAN, "Bajo": PURPLE, "No definido": GRAY}, hole=0.58)
-        fig2.update_layout(height=360, margin=dict(l=0,r=0,t=10,b=10), paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig2, use_container_width=True)
+        st.markdown('<div class="section-title">Distribución del riesgo</div>', unsafe_allow_html=True)
+        if not family_filtered.empty:
+            risk_counts = family_filtered["risk"].value_counts().reset_index()
+            risk_counts.columns = ["Riesgo", "Cantidad"]
+            fig2 = px.pie(
+                risk_counts,
+                names="Riesgo",
+                values="Cantidad",
+                hole=0.58,
+                color="Riesgo",
+                color_discrete_map={"Alto": PINK, "Medio": CYAN, "Bajo": NOVA_PURPLE, "No definido": GRAY},
+            )
+            fig2.update_layout(height=340, paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=10, b=10))
+            st.plotly_chart(fig2, use_container_width=True)
     with b2:
-        st.markdown('<div class="section-title">Módulos más cargados</div>', unsafe_allow_html=True)
-        mod = (master[master["_module"] != ""].groupby("_module").agg(registros=("_module", "size"), riesgo=("_risk_num", "mean")).reset_index().sort_values("registros", ascending=False).head(10))
-        fig3 = px.bar(mod, x="registros", y="_module", color="riesgo", orientation="h", color_continuous_scale=[PURPLE, CYAN, PINK])
-        fig3.update_layout(height=360, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10,r=10,t=10,b=10))
-        st.plotly_chart(fig3, use_container_width=True)
+        st.markdown('<div class="section-title">Módulos con mayor carga</div>', unsafe_allow_html=True)
+        mod = (
+            filtered[filtered["_module"] != ""]
+            .groupby("_module")
+            .agg(registros=("_module", "size"), riesgo=("_risk_num", "mean"))
+            .reset_index()
+            .sort_values("registros", ascending=False)
+            .head(10)
+        )
+        if not mod.empty:
+            fig3 = px.bar(
+                mod,
+                x="registros",
+                y="_module",
+                orientation="h",
+                color="riesgo",
+                color_continuous_scale=[NOVA_PURPLE, CYAN, PINK],
+            )
+            fig3.update_layout(height=340, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig3, use_container_width=True)
 
-elif page == "Riesgo FTO por jurisdicción":
-    st.markdown('<div class="section-title">Semáforo final por país / jurisdicción</div>', unsafe_allow_html=True)
-    if country_summary.empty:
-        st.info("No hay columna de jurisdicción suficientemente estructurada en los archivos cargados.")
+# =========================================================
+# PAGE 02
+# =========================================================
+elif page == "02 Riesgo FTO por jurisdicción":
+    st.markdown('<div class="section-title">Semáforo FTO final por país / jurisdicción</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subnote">Esta vista resume temperatura, actividad y prioridad de seguimiento territorial.</div>', unsafe_allow_html=True)
+
+    if jur_filtered.empty:
+        st.info("No hay datos suficientes por jurisdicción en los archivos cargados.")
     else:
-        c1, c2 = st.columns([1.2, 1])
-        with c1:
-            heat = country_summary.copy()
-            fig = go.Figure()
-            fig.add_trace(go.Bar(name="Alto", x=heat["_jurisdiction"], y=heat["alto"], marker_color=PINK))
-            fig.add_trace(go.Bar(name="Medio", x=heat["_jurisdiction"], y=heat["medio"], marker_color=CYAN))
-            fig.add_trace(go.Bar(name="Bajo", x=heat["_jurisdiction"], y=heat["bajo"], marker_color=PURPLE))
-            fig.update_layout(barmode="stack", height=420, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                              xaxis_title="Jurisdicción", yaxis_title="Registros clasificados", margin=dict(l=10,r=10,t=10,b=10))
-            st.plotly_chart(fig, use_container_width=True)
-        with c2:
-            st.markdown('<div class="info-box"><strong>Cómo leer esta vista.</strong><br>La barra apilada combina profundidad y temperatura. Un país con pocas menciones pero alto riesgo máximo puede requerir atención jurídica antes que otro con muchas menciones de baja severidad.</div>', unsafe_allow_html=True)
-            st.dataframe(country_summary[["_jurisdiction", "familias", "riesgo_promedio", "riesgo_max", "semaforo"]], use_container_width=True, hide_index=True)
-        view = filtered_master.copy()
-        view = view[(view["_family"] != "") & (view["_jurisdiction"] != "")]
-        slim = view[["_jurisdiction", "_family", "_risk", "_status", "_assignee", "_action", "_source_file"]].drop_duplicates()
-        st.markdown('<div class="section-title">Ranking de familias activas por territorio</div>', unsafe_allow_html=True)
-        st.dataframe(slim, use_container_width=True, hide_index=True)
+        t1, t2 = st.tabs(["Vista ejecutiva", "Tabla de decisión"])
 
-elif page == "Familias y portafolio activo":
-    st.markdown('<div class="section-title">Ranking final de familias activas y prioridad de seguimiento</div>', unsafe_allow_html=True)
-    fam = family_summary.copy()
-    search = st.text_input("Buscar familia, titular o módulo")
-    if search:
-        mask = fam["_family"].str.contains(search, case=False, na=False) | fam["assignee"].str.contains(search, case=False, na=False) | fam["module"].str.contains(search, case=False, na=False)
+        with t1:
+            c1, c2 = st.columns([1.3, 1])
+            with c1:
+                fig = go.Figure()
+                fig.add_trace(go.Bar(name="Rojo", x=jur_filtered["_jurisdiction"], y=jur_filtered["rojos"], marker_color=PINK))
+                fig.add_trace(go.Bar(name="Ámbar", x=jur_filtered["_jurisdiction"], y=jur_filtered["ambar"], marker_color=CYAN))
+                fig.add_trace(go.Bar(name="Verde", x=jur_filtered["_jurisdiction"], y=jur_filtered["verdes"], marker_color=NOVA_PURPLE))
+                fig.update_layout(
+                    barmode="stack",
+                    height=430,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    xaxis_title="Jurisdicción",
+                    yaxis_title="Registros clasificados",
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            with c2:
+                st.markdown(
+                    """
+                    <div class="info-box">
+                        <strong>Cómo leer la matriz territorial.</strong><br><br>
+                        Un país puede tener pocas menciones y aún así exigir atención prioritaria si su riesgo máximo
+                        es alto o si concentra familias activas con claims críticos. La lectura ejecutiva debe cruzar
+                        semáforo, estatus y facilidad de diseño-around.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+                top_j = jur_filtered.head(10)[["_jurisdiction", "familias", "riesgo_promedio", "activos", "semaforo"]]
+                st.dataframe(top_j, use_container_width=True, hide_index=True)
+
+        with t2:
+            table = jur_filtered.copy()
+            table["recomendacion"] = table["semaforo"].map({
+                "Alto": "Revisión legal externa + diseño-around",
+                "Medio": "Monitoreo activo + validación técnica",
+                "Bajo": "Seguimiento periódico",
+                "No definido": "Completar verificación",
+            })
+            st.dataframe(
+                table[["_jurisdiction", "familias", "activos", "semaforo", "recomendacion"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        st.markdown('<div class="section-title">Detalle de familias por territorio</div>', unsafe_allow_html=True)
+        detail = filtered[(filtered["_family"] != "") & (filtered["_jurisdiction"] != "")]
+        detail = detail[["_jurisdiction", "_family", "_risk", "_status_bucket", "_assignee", "_action", "_source_file"]].drop_duplicates()
+        st.dataframe(detail, use_container_width=True, hide_index=True)
+
+# =========================================================
+# PAGE 03
+# =========================================================
+elif page == "03 Familias activas y ranking":
+    st.markdown('<div class="section-title">Ranking final de familias activas</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subnote">Vista orientada a priorizar seguimiento, monitoreo y diseño-around.</div>', unsafe_allow_html=True)
+
+    fam = family_filtered.copy()
+    query = st.text_input("Buscar por familia, titular o módulo")
+    if query:
+        mask = (
+            fam["_family"].str.contains(query, case=False, na=False)
+            | fam["assignee"].str.contains(query, case=False, na=False)
+            | fam["module"].str.contains(query, case=False, na=False)
+        )
         fam = fam[mask]
-    left, right = st.columns([1.1, 1])
-    with left:
-        topn = fam.head(15)
-        fig = px.bar(topn, x="risk_num", y="_family", color="risk", orientation="h",
-                     color_discrete_map={"Alto": PINK, "Medio": CYAN, "Bajo": PURPLE, "No definido": GRAY},
-                     hover_data=["assignee", "module", "status", "action"])
-        fig.update_layout(height=520, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_title="Puntaje relativo", yaxis_title="Familia")
-        st.plotly_chart(fig, use_container_width=True)
-    with right:
-        holder = fam.groupby("assignee").agg(familias=("_family", "size"), riesgo=("risk_num", "mean")).reset_index().sort_values("familias", ascending=False).head(12)
-        fig2 = px.treemap(holder, path=["assignee"], values="familias", color="riesgo", color_continuous_scale=[PURPLE, CYAN, PINK])
-        fig2.update_layout(height=520, margin=dict(l=0,r=0,t=10,b=10), paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig2, use_container_width=True)
-    st.dataframe(fam[["_family", "risk", "assignee", "module", "status", "action", "jurisdictions"]], use_container_width=True, hide_index=True)
 
-elif page == "Claim charts y trazabilidad":
-    st.markdown('<div class="section-title">Drill-down claim-by-claim</div>', unsafe_allow_html=True)
-    if claims_table.empty:
-        st.info("No se detectaron hojas o columnas de claim chart suficientemente estructuradas.")
+    c1, c2 = st.columns([1.25, 1])
+    with c1:
+        topn = fam.head(15)
+        fig = px.bar(
+            topn,
+            x="risk_num",
+            y="_family",
+            orientation="h",
+            color="risk",
+            color_discrete_map={"Alto": PINK, "Medio": CYAN, "Bajo": NOVA_PURPLE, "No definido": GRAY},
+            hover_data=["assignee", "module", "status", "action"],
+        )
+        fig.update_layout(
+            height=520,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=10, r=10, t=10, b=10),
+            xaxis_title="Puntaje relativo",
+            yaxis_title="Familia",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        holder = fam.groupby("assignee").agg(familias=("_family", "size"), riesgo=("risk_num", "mean")).reset_index()
+        holder = holder.sort_values("familias", ascending=False).head(12)
+        fig2 = px.treemap(
+            holder,
+            path=["assignee"],
+            values="familias",
+            color="riesgo",
+            color_continuous_scale=[NOVA_PURPLE, CYAN, PINK],
+        )
+        fig2.update_layout(height=520, paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=10, b=10))
+        st.plotly_chart(fig2, use_container_width=True)
+
+    st.markdown('<div class="section-title">Tabla ejecutiva de seguimiento</div>', unsafe_allow_html=True)
+    st.dataframe(
+        fam[["_family", "risk", "assignee", "module", "status", "action", "jurisdictions", "sources"]],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+# =========================================================
+# PAGE 04
+# =========================================================
+elif page == "04 Claim charts y trazabilidad":
+    st.markdown('<div class="section-title">Claim charts, coincidencias y trazabilidad</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subnote">Panel de drill-down para revisar familias sensibles y la base documental de respaldo.</div>', unsafe_allow_html=True)
+
+    if claim_filtered.empty:
+        st.info("No se detectaron hojas o columnas suficientemente estructuradas para claim chart.")
     else:
-        families = sorted([x for x in claims_table["_family"].dropna().unique() if x])
-        sel_family = st.selectbox("Seleccionar familia", families)
-        sub = claims_table[claims_table["_family"] == sel_family].copy()
-        a, b = st.columns([1.3, 1])
-        with a:
-            cols_show = [c for c in ["_family", "_jurisdiction", "_claim", "_risk", "_status", "_action", "_source_file", "_sheet"] if c in sub.columns]
-            st.dataframe(sub[cols_show], use_container_width=True, hide_index=True)
-        with b:
-            meta = family_summary[family_summary["_family"] == sel_family]
+        families = sorted([x for x in claim_filtered["_family"].dropna().unique() if x])
+        selected_family = st.selectbox("Seleccionar familia", families)
+        sub = claim_filtered[claim_filtered["_family"] == selected_family].copy()
+
+        c1, c2 = st.columns([1.35, 1])
+        with c1:
+            show_cols = [c for c in ["_jurisdiction", "_claim", "_risk", "_status_bucket", "_action", "_source_file", "_sheet"] if c in sub.columns]
+            visible = sub[show_cols + [c for c in sub.columns if not c.startswith("_")][:10]]
+            st.dataframe(visible, use_container_width=True, hide_index=True)
+        with c2:
+            meta = family_summary[family_summary["_family"] == selected_family]
             if not meta.empty:
                 row = meta.iloc[0]
-                st.markdown(f"""
+                st.markdown(
+                    f"""
                     <div class="decision-box">
                         <h3>Ficha rápida de la familia</h3>
                         <p><strong>Riesgo:</strong> {row['risk']}</p>
@@ -539,43 +808,93 @@ elif page == "Claim charts y trazabilidad":
                         <p><strong>Estatus:</strong> {row['status']}</p>
                         <p><strong>Acción:</strong> {row['action']}</p>
                     </div>
-                    """, unsafe_allow_html=True)
-        trace = sub[["_source_file", "_sheet", "_jurisdiction", "_status"]].drop_duplicates()
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+        match_counts = sub["_match_level"].value_counts().reset_index()
+        if not match_counts.empty:
+            match_counts.columns = ["Nivel", "Cantidad"]
+            fig = px.bar(
+                match_counts,
+                x="Nivel",
+                y="Cantidad",
+                color="Nivel",
+                color_discrete_map={
+                    "Coincidencia alta": PINK,
+                    "Coincidencia parcial": CYAN,
+                    "Coincidencia baja": NOVA_PURPLE,
+                    "No definido": GRAY,
+                },
+            )
+            fig.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig, use_container_width=True)
+
         st.markdown('<div class="section-title">Trazabilidad de fuentes</div>', unsafe_allow_html=True)
+        trace = sub[["_source_file", "_sheet", "_jurisdiction", "_status_bucket"]].drop_duplicates()
         st.dataframe(trace, use_container_width=True, hide_index=True)
 
-else:
-    st.markdown('<div class="section-title">Control de carga y calidad de datos</div>', unsafe_allow_html=True)
-    books = load_all_books()
-    control_df = pd.DataFrame([
-        {"Archivo": fname, "Disponible": "Sí" if (DATA_DIR / fname).exists() else "No", "Hojas leídas": len(books.get(key, {})), "Filas estimadas": int(sum(df.shape[0] for df in books.get(key, {}).values()))}
-        for key, fname in EXPECTED_FILES.items()
-    ])
-    st.dataframe(control_df, use_container_width=True, hide_index=True)
-    c1, c2 = st.columns(2)
+# =========================================================
+# PAGE 05
+# =========================================================
+elif page == "05 Salud de datos":
+    st.markdown('<div class="section-title">Control de carga y salud del modelo de datos</div>', unsafe_allow_html=True)
+
+    rows = []
+    books = load_books()
+    for key, fname in REQUIRED_FILES.items():
+        book = books.get(key, {})
+        rows.append({
+            "Archivo": fname,
+            "Disponible": "Sí" if (DATA_DIR / fname).exists() else "No",
+            "Hojas leídas": len(book),
+            "Filas estimadas": int(sum(df.shape[0] for df in book.values())) if book else 0,
+        })
+    control = pd.DataFrame(rows)
+    st.dataframe(control, use_container_width=True, hide_index=True)
+
+    c1, c2 = st.columns([1, 1])
     with c1:
         completeness = pd.DataFrame([
             {"Campo": "Familia", "Completitud %": round((master["_family"] != "").mean() * 100, 1)},
             {"Campo": "Jurisdicción", "Completitud %": round((master["_jurisdiction"] != "").mean() * 100, 1)},
             {"Campo": "Riesgo", "Completitud %": round((master["_risk"] != "No definido").mean() * 100, 1)},
-            {"Campo": "Estatus", "Completitud %": round((master["_status"] != "No definido").mean() * 100, 1)},
+            {"Campo": "Estatus", "Completitud %": round((master["_status_bucket"] != "No definido").mean() * 100, 1)},
             {"Campo": "Acción", "Completitud %": round((master["_action"] != "No definida").mean() * 100, 1)},
         ])
-        fig = px.bar(completeness, x="Completitud %", y="Campo", orientation="h", color="Completitud %", color_continuous_scale=[PINK, CYAN, PURPLE])
-        fig.update_layout(height=320, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        fig = px.bar(
+            completeness,
+            x="Completitud %",
+            y="Campo",
+            orientation="h",
+            color="Completitud %",
+            color_continuous_scale=[PINK, CYAN, NOVA_PURPLE],
+        )
+        fig.update_layout(height=320, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=10, r=10, t=10, b=10))
         st.plotly_chart(fig, use_container_width=True)
     with c2:
-        st.markdown('''<div class="info-box"><strong>Prioridades de hardening del dashboard</strong><br><br>
-            1. Unificar nombres de columnas entre workbooks.<br>
-            2. Estandarizar la codificación de riesgo y estatus por jurisdicción.<br>
-            3. Exportar shortlist y hoja de ruta en Excel para enriquecer la capa de gestión.<br>
-            4. Consolidar un identificador único por familia para evitar dobles conteos.<br>
-            5. Versionar la base en formato Parquet cuando el modelo quede estable.
-            </div>''', unsafe_allow_html=True)
-    sheet_options = sorted(set(master["_source_file"].astype(str) + " | " + master["_sheet"].astype(str)))
-    sel = st.selectbox("Elegir origen", sheet_options)
-    src_file, src_sheet = [x.strip() for x in sel.split("|", 1)]
-    exp = master[(master["_source_file"] == src_file) & (master["_sheet"] == src_sheet)]
-    st.dataframe(exp, use_container_width=True, hide_index=True)
+        st.markdown(
+            """
+            <div class="info-box">
+                <strong>Prioridades de hardening</strong><br><br>
+                1. Unificar columnas entre workbooks.<br>
+                2. Consolidar IDs únicos por familia.<br>
+                3. Exportar shortlist, patentabilidad y hoja de ruta en Excel para integrarlas a esta versión.<br>
+                4. Migrar a Parquet o SQLite cuando el modelo esté estable.<br>
+                5. Añadir autenticación si la publicación será externa.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-st.markdown('<div class="small-note">Diseño visual alineado a Innovafirst y armonizado con acentos Novandino. Para despliegue, cargar los archivos Excel en /data y el logo opcional en /assets/novandino_logo.png.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Explorador de datos</div>', unsafe_allow_html=True)
+    origins = sorted(set(master["_source_file"].astype(str) + " | " + master["_sheet"].astype(str)))
+    selected_origin = st.selectbox("Elegir origen", origins)
+    src_file, src_sheet = [x.strip() for x in selected_origin.split("|", 1)]
+    sub = master[(master["_source_file"] == src_file) & (master["_sheet"] == src_sheet)]
+    st.dataframe(sub, use_container_width=True, hide_index=True)
+
+st.markdown(
+    '<div class="footer-note">Versión mejorada lista para GitHub + Streamlit. Diseño base Innovafirst con acentos Novandino. Para incorporar roadmap y patentabilidad como módulos vivos, se recomienda exportarlos a Excel estructurado.</div>',
+    unsafe_allow_html=True,
+)

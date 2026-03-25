@@ -1,20 +1,22 @@
-# Novandino | IP & FTO Executive Dashboard
+# Novandino | Executive IP Dashboard v2
 
-Dashboard ejecutivo en **Streamlit** para revisar de forma simple, visual y dinámica el estado de:
-- vigilancia tecnológica,
-- patentabilidad preliminar,
-- libertad de operación (FTO),
-- familias críticas,
-- claim charts,
-- y calidad de la base estructurada.
+Versión mejorada del dashboard ejecutivo para **vigilancia tecnológica, patentabilidad preliminar y libertad de operación (FTO)**, pensado para que una gerencia pueda revisar el estado del proyecto de forma:
 
-La interfaz combina la lógica gráfica de **Innovafirst** con acentos visuales compatibles con la marca **Novandino**.
+- simple,
+- visual,
+- elegante,
+- dinámica,
+- y trazable.
 
-## Estructura recomendada del repositorio
+Esta versión combina el lenguaje gráfico de **Innovafirst** con acentos compatibles con la identidad visual de **Novandino**.
+
+---
+
+## 1) Estructura recomendada del repositorio
 
 ```text
 novandino-ip-fto-dashboard/
-├── app_p1_1.py
+├── app_p2_0.py
 ├── requirements.txt
 ├── README.md
 ├── data/
@@ -27,9 +29,11 @@ novandino-ip-fto-dashboard/
     └── novandino_logo.png
 ```
 
-## Archivos Excel que usará el dashboard
+---
 
-Deja los Excel **con exactamente estos nombres** dentro de `/data`:
+## 2) Archivos Excel obligatorios
+
+La app espera estos archivos **con exactamente estos nombres** dentro de `/data`:
 
 1. `Innovafirst_Matriz_Maestra_Patentes_Consolidada_Fase2.xlsx`
 2. `Innovafirst_Screening_Amplio_Exhaustivo_Razonable_Fase2.xlsx`
@@ -37,47 +41,43 @@ Deja los Excel **con exactamente estos nombres** dentro de `/data`:
 4. `Innovafirst_ClaimChart_Profundo_Albemarle_US11219863.xlsx`
 5. `Innovafirst_ClaimChart_Profundo_Tier1_Complemento.xlsx`
 
-### Opcional
-Si quieres mostrar el logo en el encabezado, agrega en `/assets`:
+### Opcionales para una siguiente iteración
+Si más adelante los exportas a Excel estructurado, puedes sumar:
+- `Innovafirst_Hoja_de_Ruta_Implementacion.xlsx`
+- `Innovafirst_Informe_Preliminar_Patentabilidad.xlsx`
+- `Innovafirst_Shortlist_Critica_Consolidada_Post_Screening.xlsx`
+
+---
+
+## 3) Logo
+
+Para mostrar el logo de Novandino en el header, deja este archivo en `/assets`:
+
 - `novandino_logo.png`
 
-## Qué hace el dashboard
+---
 
-### Resumen ejecutivo
-Muestra:
-- familias identificadas,
-- jurisdicciones cubiertas,
-- familias en rojo / ámbar,
-- señales de estatus activo,
-- recomendación ejecutiva automática.
+## 4) Qué mejora esta versión
 
-### Riesgo FTO por jurisdicción
-Muestra:
-- semáforo por país,
-- ranking de familias activas por territorio,
-- vista acumulada de riesgo.
+Respecto de la versión anterior, esta versión:
 
-### Familias y portafolio activo
-Muestra:
-- ranking de familias,
-- titulares,
-- módulos,
-- acciones recomendadas,
-- prioridad de seguimiento.
+- mejora la armonía visual con la marca Novandino,
+- refuerza la lógica ejecutiva y gerencial,
+- mejora el cockpit inicial,
+- mejora la lectura territorial,
+- mejora el drill-down claim-by-claim,
+- y mejora la vista de salud de datos.
 
-### Claim charts y trazabilidad
-Permite:
-- seleccionar una familia,
-- revisar filas con claims,
-- ver fuentes, hojas y estatus relacionados.
+### Módulos incluidos
+1. **Resumen ejecutivo**
+2. **Riesgo FTO por jurisdicción**
+3. **Familias activas y ranking**
+4. **Claim charts y trazabilidad**
+5. **Salud de datos**
 
-### Salud de datos y control
-Permite:
-- revisar qué archivos cargaron correctamente,
-- ver cobertura de campos,
-- explorar hojas y tablas.
+---
 
-## Instalación local
+## 5) Instalación local
 
 ### Crear entorno virtual
 ```bash
@@ -96,38 +96,42 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Ejecutar en local
+---
+
+## 6) Ejecutar la aplicación
 
 ```bash
-streamlit run app_p1_1.py
+streamlit run app_p2_0.py
 ```
 
-## Despliegue en GitHub + Streamlit Cloud
+---
 
-### Paso 1
-Sube a GitHub:
-- `app_p1_1.py`
+## 7) Despliegue en GitHub + Streamlit Cloud
+
+### Subir al repositorio
+Debes subir:
+- `app_p2_0.py`
 - `requirements.txt`
 - `README.md`
 - carpeta `/data` con los Excel
-- carpeta `/assets` con `novandino_logo.png` si deseas usarlo
+- carpeta `/assets` con `novandino_logo.png`
 
-### Paso 2
-En Streamlit Community Cloud:
-- conecta el repositorio,
-- selecciona la rama principal,
-- define como archivo principal: `app_p1_1.py`
+### En Streamlit Community Cloud
+- conectar el repositorio,
+- seleccionar la rama principal,
+- definir como archivo principal: `app_p2_0.py`
 
-### Paso 3
 Deploy.
 
-## Recomendaciones de calidad de datos
+---
 
-Para que el dashboard funcione mejor:
-- mantener consistencia de nombres de columnas,
-- no cambiar arbitrariamente los nombres de los archivos,
-- preferir hojas estructuradas,
-- incluir columnas como:
+## 8) Recomendaciones para que funcione bien
+
+Para mejores resultados:
+
+- mantener nombres de archivo idénticos,
+- no romper la estructura de hojas de los Excel,
+- mantener columnas como:
   - family / familia
   - jurisdiction / country / país
   - risk / riesgo
@@ -136,18 +140,27 @@ Para que el dashboard funcione mejor:
   - assignee / titular
   - module / módulo
   - claim / reivindicación
+- intentar homogeneizar encabezados entre workbooks.
 
-## Roadmap sugerido de mejora
+---
 
-1. Exportar la shortlist crítica a Excel.
-2. Exportar la hoja de ruta a Excel para incorporarla al dashboard.
-3. Consolidar IDs únicos por familia.
-4. Migrar de Excel a Parquet o SQLite cuando la estructura esté estable.
-5. Añadir autenticación si se publicará fuera de entorno cerrado.
+## 9) Próxima versión sugerida
 
-## Nota
-Este dashboard está pensado para **gerencia, comité o directorio**, no para reemplazar el análisis jurídico detallado. Su foco es:
-- lectura simple,
+La siguiente iteración ideal sería integrar también:
+
+- módulo de **hoja de ruta**,
+- módulo de **patentabilidad preliminar**,
+- filtros descargables,
+- snapshots ejecutivos,
+- y autenticación si se publicará fuera de entorno privado.
+
+---
+
+## 10) Nota
+Este dashboard no reemplaza el análisis jurídico detallado. Su foco es:
+
+- lectura ejecutiva,
 - decisión rápida,
-- trazabilidad mínima,
-- y navegación elegante sobre la base estructurada existente.
+- priorización,
+- seguimiento,
+- y trazabilidad mínima sobre la base estructurada disponible.
