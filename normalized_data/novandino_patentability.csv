@@ -1,0 +1,12 @@
+categoria,subcategoria,lectura,cantidad,detalle
+Núcleo inventivo potencial,Integración preconcentración + reacción/cristalización con KCl + NF posterior,Prometedora pero condicionada,1,"La combinación completa aparece como hipótesis defendible, pero sigue expuesta a obviedad si no se acredita efecto técnico diferencial y delimitación fina."
+Núcleo inventivo potencial,Posición de NF aguas abajo de cristalización reactiva,Prometedora,1,Debe demostrarse por qué esta ubicación produce una ventaja no trivial frente a rutas membrane-first o aged-brine.
+Núcleo inventivo potencial,Ventanas operacionales / integración hídrica,Pendiente de soporte,1,Requiere parámetros cerrados y balances verificables para soportar novedad y actividad inventiva.
+Riesgo de obviedad,KCl/carnallita para remoción de Mg,Alto,1,La familia US9005557/CN105540620 cubre el eje conceptual más sensible.
+Riesgo de obviedad,Trenes NF/RO/ED para enriquecimiento de Li,Alto,1,Las familias US11219863 y US11203542 reducen margen para claims amplios de membranas.
+Riesgo de bloqueo,US,Muy alto,1,Persisten familias activas relevantes en US con claims concedidos.
+Riesgo de bloqueo,CN,Muy alto,1,Alta densidad de familias activas y cercanas en China.
+Riesgo de bloqueo,CL/AR/CA,Medio,1,Requieren validación oficial fina antes de cerrar una conclusión firme.
+Brecha crítica,Caracterización analítica de Sales CK,Crítica,1,Sin XRD/SEM-EDS/ICP no puede cerrarse si hay carnalita o fase equivalente.
+Brecha crítica,Ventanas composicionales y Mg/Li reales por etapa,Crítica,1,Necesarias para diferenciarse de claims upstream basados en bischofita/carnallita y aged brine.
+Recomendación estratégica,Patente vs secreto industrial,Mixta,1,"Conviene patentar la lógica integradora defendible y reservar parámetros finos, control de operación y data de performance."
